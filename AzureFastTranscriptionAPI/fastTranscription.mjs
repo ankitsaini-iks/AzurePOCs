@@ -1,6 +1,3 @@
-
-import dotenv from 'dotenv';
-dotenv.config();
 import formidable from 'formidable';
 import { createItem, updateItem } from './db.js';
 import { BlobServiceClient } from '@azure/storage-blob';
