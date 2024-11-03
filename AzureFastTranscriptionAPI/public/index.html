@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Client</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    
+    <h2>Upload Audio File to Transcribe Via Backend</h2>
+    <input type="file" id="audioFile" accept=".wav" />
+    <button id="uploadButton">Submit</button>
+    
+    <h1>Websocket Response</h1>
+    <div id="messages"></div>
+    <script>
+        let clientId;
+        // Connect to the Socket.IO server
+        const socket = io();
+
+        // Listen for the 'welcome' event
+        socket.on('welcome', (data) => {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p>${data.message} ${data.id}</p>`;
+            clientId = data.id;
+        });
+
+        // Listen for the 'responseEvent' event
+        socket.on('responseEvent', (data) => {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p>${data.message}</p>`;
+            if(data.text) messagesDiv.innerHTML += `<p><b>Text: ${data.text}</b></p>`;
+            if(data.offset) messagesDiv.innerHTML += `<p>Offset: ${data.offset}</p>`;
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        // Handle audio file upload
+        document.getElementById('uploadButton').addEventListener('click', () => {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a WAV file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', file);
+            formData.append('clientId', clientId);
+
+            // Send the file to the /transcribe endpoint
+            fetch('/transcribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML += `<p>Transcription: ${data.transcription}</p>`;
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+        });
+    </script>
+</body>
+</html>
