@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Fast Transcription API</title>
+</head>
+
+<body>
+
+    <h2>Upload Audio File to Fast Transcribe using Multipart body</h2>
+    <div style="margin: 5px;"><input type="file" id="audioFile" /></div>
+    <div style="margin: 5px;"><input type="text" id="callbackUrl" placeholder="Callbackurl" /></div>
+    <div style="margin: 5px;"><button id="uploadButton">Submit</button></div>
+    <pre id="messages"></pre>
+
+    <h2>Upload Audio File to Fast Transcribe using JSON body</h2>
+    <div style="margin: 5px;"><input type="text" id="audioFileUrl" placeholder="Azure Audio file Url" /></div>
+    <div style="margin: 5px;"><input type="text" id="callbackUrl" placeholder="Callbackurl" /></div>
+    <div style="margin: 5px;"><button id="uploadButton2">Submit</button></div>
+
+    <pre id="messages2"></pre>
+    <script>
+        // Handle audio file upload
+        document.getElementById('uploadButton').addEventListener('click', () => {
+            const messagesDiv = document.getElementById('messages');
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                messagesDiv.innerHTML = `<p>Please select an Audio file to upload.</p>`;
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', file);
+            const callbackUrl = document.getElementById('callbackUrl').value;
+            if (callbackUrl) formData.append('callbackUrl', callbackUrl);
+
+            messagesDiv.innerHTML = `<p>Calling FastTranscription API...</p>`;
+
+            // Send the file to the /transcribe endpoint
+            fetch('/fastTranscribeMultiPart', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    messagesDiv.innerHTML = `<p>Transcription: ${JSON.stringify(data, null, 2)}</p>`;
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        });
+
+        document.getElementById('uploadButton2').addEventListener('click', () => {
+            const messagesDiv = document.getElementById('messages2');
+            const audioFileUrl = document.getElementById('audioFileUrl').value;
+            console.log(audioFileUrl);
+
+            if (!audioFileUrl) {
+                messagesDiv.innerHTML = `<p>Please provide Audio file url</p>`;
+                return;
+            }
+
+            const callbackUrl = document.getElementById('callbackUrl').value;
+
+            messagesDiv.innerHTML = `<p>Calling FastTranscription API...</p>`;
+
+            // Send the file to the /transcribe endpoint
+            fetch('/fastTranscribeJson', {
+                method: 'POST',
+                body: JSON.stringify({ audioFilePath: audioFileUrl, callbackUrl }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    messagesDiv.innerHTML = `<p>Transcription: ${JSON.stringify(data, null, 2)}</p>`;
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        });
+    </script>
+</body>
+
+</html>
