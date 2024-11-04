@@ -1,0 +1,27 @@
+name: Build and push to ACR
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image and push to acr
+    - uses: azure/docker-login@v2
+      with:
+        login-server: contoso.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - run: |
+        docker build . -t dockerazure.azurecr.io/node:${{ github.sha }}
+        docker push dockerazure.azurecr.io/node:${{ github.sha }}
+      
